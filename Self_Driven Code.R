@@ -1,50 +1,28 @@
-library(vars)
-library(aTSA)
-library(rugarch)
-library(fUnitRoots)
-library(tidyverse)
+# Load the 'class' package
+library(class)
 
-df1 <- read.csv("E:/1st-Sem/Time Series Analysis/PastPaper/Q1Data.csv")
-head(df1)
+# Create a vector of labels
+sign_types <- signs$sign_type
 
-plot(ts(df1))
+# Classify the next sign observed
+knn(train = signs[-1], test = next_sign, cl = sign_types)
 
-adfTest(df1[,1],type = "nc")
-adfTest(df1[,2],type = "nc")
+# Examine the structure of the signs dataset
+str(signs)
 
+# Count the number of signs of each type
+table(signs$sign_type)
 
-coint.test(df1[,1], df1[,2], d =0, nlag = NULL, output = TRUE)
+# Check r10's average red level by sign type
+aggregate(r10 ~ sign_type, data = signs, mean)
 
+# Use kNN to identify the test road signs
+sign_types <- signs$sign_type
+signs_pred <- knn(train = signs[-1], test = test_signs[-1], cl = sign_types)
 
-df2 <- read.csv("E:/1st-Sem/Time Series Analysis/PastPaper/Q2Data.csv")
+# Create a confusion matrix of the predicted versus actual values
+signs_actual <- test_signs$sign_type
+table(signs_pred, signs_actual)
 
-head(df2)
-
-mod1 <- arima(df2)
-
-returnSeries <- ts(df2)
-plot(returnSeries)
-
-arch.test(mod1)
-
-
-length(df2)
-typeof(df2)
-df2
-trainingSet <- window(ts(df2),1,313)
-testingSet <- window(ts(df2),314,368)
-length(testingSet)
-
-                                              
-
-Ugarch_Spec <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(1, 1)), 
-           mean.model = list(armaOrder = c(1, 1)), 
-           distribution.model = "std")
-
- garch_Fit <- ugarchfit(spec = Ugarch_Spec, data = returnSeries, out.sample = 55)
- 
- coef(garch_Fit)
- 
- garch_Fit@fit$matcoef
-
-print(garch_Fit)
+# Compute the accuracy
+mean(signs_pred == signs_actual)
